@@ -1,31 +1,68 @@
 library(dplyr)
-library(ggplot2)
 library(readr)
+library(lubridate)
+library(purrr)
 library(leaflet)
-dane<- read_csv("C:/Users/szyml/Downloads/GOTOES_FIT-CSV_4704834830900716.csv") 
 
-folder_path <- "C:/Users/szyml/Desktop/programowanie/twd/projekt2"
-csv_files <- list.files(
-  path = folder_path,
-  pattern = "\\.csv$",  
-  full.names = TRUE      
+# --- 1. POBIERANIE DANYCH Z GITHUB ---
+user <- "nomysz05"
+repo <- "TWD-Projekt2"
+
+files_to_process <- list(
+  list(path = "dane magda/dane_Magda.csv", owner = "Magda"),
+  list(path = "dane_hela/dane_hela1.csv", owner = "Hela"),
+  list(path = "dane_hela/dane_hela2.csv", owner = "Hela"),
+  list(path = "Dane Szymon/dane_szymon.csv", owner = "Szymon")
 )
 
+fetch_github_data <- function(file_info) {
+  url <- URLencode(paste0("https://raw.githubusercontent.com/", user, "/", repo, "/main/", file_info$path))
+  tryCatch({
+    df <- read_csv(url, show_col_types = FALSE)
+    df %>% 
+      filter(!is.na(position_lat) & !is.na(position_long)) %>% 
+      mutate(osoba = file_info$owner)
+  }, error = function(e) return(NULL))
+}
 
-print(csv_files)
-data_list <- lapply(csv_files, read_csv, show_col_types = FALSE)
+# Łączymy wszystkie dane
+wszystkie_punkty <- map_df(files_to_process, fetch_github_data)
 
+# --- 2. FILTROWANIE (CO 10 ZAPIS) ---
+dane_do_mapy <- wszystkie_punkty %>%
+  group_by(osoba) %>%
+  # Wybieramy co 10-ty wiersz dla każdej osoby
+  slice(seq(1, n(), by = 10)) %>%
+  ungroup()
 
-dane <- bind_rows(data_list)
-dane <-dane%>% 
-  select(timestamp,position_lat,position_long,distance,speed)
+# --- 3. RYSOWANIE MAPY WSZYSTKICH PUNKTÓW ---
+pal <- colorFactor(palette = c("red", "blue", "black"), domain = dane_do_mapy$osoba)
 
-dane_bez_NA <-dane %>% 
-  filter(!is.na(position_lat)) %>% 
-  slice(seq(1,nrow(dane),10))
-leaflet(dane_bez_NA) %>% 
-  addTiles() %>% 
+mapa_sciezek <- leaflet(dane_do_mapy) %>%
+  addTiles() %>%
+  # Używamy addCircles dla wydajności przy dużej ilości punktów
   addCircles(
-    lng=~position_long,
-    lat=~position_lat
+    lng = ~position_long, 
+    lat = ~position_lat, 
+    color = ~pal(osoba),
+    radius = 5,           # Stały mały rozmiar punktu (metry)
+    weight = 1, 
+    fillOpacity = 0.5,
+    group = ~osoba,       # Grupowanie umożliwia wyłączanie osób w menu
+    popup = ~paste0("Osoba: ", osoba, "<br>Czas: ", timestamp)
+  ) %>%
+  addLegend(
+    "bottomright", 
+    pal = pal, 
+    values = ~osoba, 
+    title = "Trasy użytkowników",
+    opacity = 1
+  ) %>%
+  # Dodajemy panel wyboru osób (warstw)
+  addLayersControl(
+    overlayGroups = unique(dane_do_mapy$osoba),
+    options = layersControlOptions(collapsed = FALSE)
   )
+
+# Wyświetlenie mapy
+print(mapa_sciezek)
