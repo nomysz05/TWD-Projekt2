@@ -1,0 +1,2 @@
+StartTime,EndTime,Title,WorkoutType,ActivityType,Steps,Calories,Duration(seconds),Distance(meters),ElevationGain(meters),AveragePace(seconds/km),AverageSpeed(km/h),Comments,DataSource
+2025-12-03 11:10:24,2025-12-03 11:12:15,Środa Południe Marsz,GPS,Spacerowanie,34,6,104,61,0,1692,2,1,,Phone
