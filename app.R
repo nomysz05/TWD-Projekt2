@@ -28,7 +28,7 @@ fetch_github_data <- function(file_info) {
 }
 wszystkie_punkty <- map_df(files_to_process, fetch_github_data)
 
-## DANE 2 SZYMONA
+##  DANE DO ZAKŁADKI 2 i 3 :
 rankingi_osobiste <- wszystkie_punkty %>%
   mutate(
     lat_approx = round(position_lat, 3),
@@ -78,6 +78,31 @@ aktywnosc_godzinowa <- wszystkie_punkty %>%
   mutate(godzina = hour(timestamp)) %>%
   group_by(osoba, godzina) %>%
   summarise(intensywnosc = n(), .groups = "drop")
+
+##  DANE DO ZAKŁADKI 3 I 4:
+daneM <- read.csv("https://raw.githubusercontent.com/nomysz05/TWD-Projekt2/refs/heads/main/dane%20magda/DailySteps_2026_01_13_1700.csv")
+daneH <- read.csv("https://raw.githubusercontent.com/nomysz05/TWD-Projekt2/refs/heads/main/dane_hela/DailySteps_2026_01_13_1940.csv")
+daneS <- read.csv("https://raw.githubusercontent.com/nomysz05/TWD-Projekt2/refs/heads/main/daneSzymon/PacerDataLogs/DailySteps_2026_01_13_1952.csv")
+
+daneM_pom <- daneM %>%
+  mutate(Data = as.Date(Date), Kroki = as.numeric(Steps), Dystans_km = as.numeric(Distance.meters.) / 1000, Osoba = "Magda") %>% 
+  select(Data, Kroki, Dystans_km, Osoba)
+
+daneH_pom <- daneH %>%
+  mutate(Data = as.Date(Date), Kroki = as.numeric(Steps), Dystans_km = as.numeric(Distance.meters.) / 1000, Osoba = "Hela") %>% 
+  select(Data, Kroki, Dystans_km, Osoba)
+
+daneS_pom <- daneS %>%
+  mutate(Data = as.Date(Date), Kroki = as.numeric(Steps), Dystans_km = as.numeric(Distance.meters.) / 1000, Osoba = "Szymon") %>% 
+  select(Data, Kroki, Dystans_km, Osoba)
+
+dane_zbiorcze_kroki <- bind_rows(daneM_pom, daneH_pom, daneS_pom) %>%
+  filter(Data >= "2025-12-07") %>%
+  arrange(Data) %>%
+  group_by(Osoba) %>%
+  mutate(Suma_km = cumsum(Dystans_km), Suma_Krokow = cumsum(Kroki)) %>%
+  ungroup()
+
 
 ##  APLIKACJA:
 ui <- navbarPage(
@@ -134,6 +159,22 @@ ui <- navbarPage(
                plotOutput("wykres_godzinowy", height = "600px")
              )
            )
+  ),
+  tabPanel("Przebyte dystanse",
+           sidebarLayout(
+             sidebarPanel(
+               h4("Wybierz metrykę"),
+               selectInput("wybor_widoku", "Wybierz metrykę:",
+                           choices = c("Kilometry (suma)" = "km", 
+                                       "Kroki (suma)" = "kroki"),
+                           selected = "km"),
+               hr(),
+               p("Dane są sumowane od dnia 7 grudnia 2025.")
+             ),
+             mainPanel(
+               plotlyOutput("wykres_kroki_km", height = "600px")
+             )
+           )
   )
   
 )
@@ -176,7 +217,8 @@ server <- function(input, output, session) {
         addTiles() %>%
         addCircleMarkers(~long_approx, ~lat_approx, radius = ~sqrt(ilosc_wizyt) * 5, 
                          color = ~color_palette(osoba), stroke = TRUE, weight = 2, fillOpacity = 0.6,
-                         popup = ~paste0("<b>Osoba:</b> ", osoba, "<br><b>Miejsce:</b> ", nazwa_wykres, "<br><b>Wizyt:</b> ", ilosc_wizyt))
+                         popup = ~paste0("<b>Osoba:</b> ", osoba, "<br><b>Miejsce:</b> ", nazwa_wykres, "<br><b>Wizyt:</b> ", ilosc_wizyt)) %>% 
+        addLegend("bottomright", pal = color_palette, values = c("Hela", "Magda", "Szymon"), title = "Osoba", opacity=1)
     })
     
     output$wykres_slupkowy <- renderPlot({
@@ -208,7 +250,32 @@ server <- function(input, output, session) {
         theme_minimal() +
         theme(legend.position = "none")
     })
+    
+    output$wykres_kroki_km <- renderPlotly({
+      if (input$wybor_widoku == "km") {
+        p <- ggplot(dane_zbiorcze_kroki, aes(x = Data, y = Suma_km, color = Osoba)) +
+          geom_line(size = 1) +
+          geom_point(aes(text = paste0("<b>Osoba:</b> ", Osoba, "<br><b>Data:</b> ", Data, 
+                                       "<br><b>Dziś:</b> ", round(Dystans_km, 2), " km",
+                                       "<br><b>Suma:</b> ", round(Suma_km, 1), " km"))) +
+          labs(title = "Suma przebytych kilometrów", y = "Kilometry (km)")
+      } else {
+        p <- ggplot(dane_zbiorcze_kroki, aes(x = Data, y = Suma_Krokow, color = Osoba)) +
+          geom_line(size = 1) +
+          geom_point(aes(text = paste0("<b>Osoba:</b> ", Osoba, "<br><b>Data:</b> ", Data, 
+                                       "<br><b>Dziś:</b> ", Kroki, " kroków",
+                                       "<br><b>Suma:</b> ", format(Suma_Krokow, big.mark=" ")))) +
+          labs(title = "Suma zrobionych kroków", y = "Liczba kroków")
+      }
+      
+      p <- p + scale_color_manual(values = c("Magda" = "darkred", "Hela" = "#E16036", "Szymon" = "#241715")) +
+        theme_bw() + theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+        scale_y_continuous(labels = label_number(big.mark = " "))
+      
+      ggplotly(p, tooltip = "text")%>%
+        layout(hoverlabel = list(bordercolor = "transparent",
+                                 font = list(color = "white", size = 13)))
+    })
 }
 
 shinyApp(ui = ui, server = server)
-
