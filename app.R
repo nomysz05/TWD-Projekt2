@@ -6,6 +6,8 @@ library(lubridate)
 library(purrr)
 library(leaflet)
 library(ggplot2)
+library(plotly)
+library(scales)
 
 
 ##  DANE DO TRAS:
@@ -47,10 +49,10 @@ rankingi_osobiste <- wszystkie_punkty %>%
   mutate(nazwa_wykres = case_when(
     osoba == "Hela" & loc_id == "52.204, 21.012" ~ "Dom",
     osoba == "Hela" & loc_id == "52.222, 21.007" ~ "MiNI",
-    osoba == "Hela" & loc_id == "52.216, 21.017" ~ "Dom dziewczyny",
+    osoba == "Hela" & loc_id == "52.216, 21.017" ~ "Mikrus",
     osoba == "Hela" & loc_id == "61.317, 12.615" ~ "Wyjazd do Norwegii",
     osoba == "Hela" & loc_id == "52.221, 21.01"  ~ "Gmach Główny",
-    osoba == "Hela" & loc_id == "52.19, 21.018"  ~ "Bar Wierzbno",
+    osoba == "Hela" & loc_id == "52.19, 21.018"  ~ "Dom znajomego",
     osoba == "Hela" & loc_id == "52.218, 20.984" ~ "DS Alcatraz",
     osoba == "Hela" & loc_id == "52.204, 21.013" ~ "Dom",
     osoba == "Magda" & loc_id == "51.992, 21.059" ~ "Dom",
@@ -103,15 +105,43 @@ dane_zbiorcze_kroki <- bind_rows(daneM_pom, daneH_pom, daneS_pom) %>%
   mutate(Suma_km = cumsum(Dystans_km), Suma_Krokow = cumsum(Kroki)) %>%
   ungroup()
 
+kolory <- c("Magda" = "#133DF6", "Hela" = "#1E96FC", "Szymon" = "#F26430")
 
 ##  APLIKACJA:
 ui <- navbarPage(
   title = "Nasza aktywność w ciągu miesiąca",
   theme = bs_theme(version = 5, bootswatch = "darkly"),
+  tabPanel("O projekcie",
+           fluidPage(
+             container = list(style = "max-width: 900px; margin-top: 30px;"),
+             card(
+               card_header(h3("O projekcie", class = "text-center")),
+               card_body(
+                 p("Witaj w aplikacji monitorującej aktywność fizyczną i przemieszczanie się grupy znajomych: ", 
+                   strong("Heli, Magdy i Szymona"), "."),
+                 p("Aplikacja przetwarza dane z GPS oraz liczników kroków, aby wizualizować nasze nawyki i styl życia na przestrzeni ostatniego miesiąca."),
+                 hr(),
+                 h4("Co zawiera ta aplikacja?"),
+                 tags$ul(
+                   tags$li(strong("Trasa aktywności:"), " Interaktywna mapa pozwalająca prześledzić dokładne ścieżki, którymi poruszaliśmy się wybranego dnia."),
+                   tags$li(strong("Lokalizacje:"), " Analiza miejsc, w których bywamy najczęściej – od uczelni (MiNI, Gmach Główny) po domy i miejsca rekreacji."),
+                   tags$li(strong("Rytm dobowy:"), " Wykresy intensywności ruchu, które pokazują, w jakich godzinach jesteśmy najbardziej aktywni."),
+                   tags$li(strong("Statystyki dystansu:"), " Zbiorcze zestawienie przebytych kilometrów i zrobionych kroków w formie interaktywnego wykresu liniowego.")
+                 ),
+                 hr(),
+                 p(em("Dane zbieraliśmy za pomocą aplikacji Strava oraz Pacer, pobieramy je z repozytorium na GitHub.")),
+                 hr()
+               )
+             )
+           )
+  ),
 
   tabPanel("Trasa aktywności",
            sidebarLayout(
              sidebarPanel(
+               h3('Trasy aktywności'),
+               p('Opis lalallallalallalallla'),
+               hr(),
                h4("Filtry"),
                dateInput("data", 
                          "Wybierz datę:", 
@@ -134,6 +164,7 @@ ui <- navbarPage(
   tabPanel("Gdzie najczęściej się pojawialiśmy",
            fluidPage(
              h4("Mapa najczęściej odwiedzanych miejsc"),
+             p('Opis lalallallalallalallla'),
              card(
                card_body(
                  checkboxGroupInput("osoba_zbiorcza", "Wybierz osoby do wyświetlenia na mapie:",
@@ -146,6 +177,7 @@ ui <- navbarPage(
              br(),
              card(
                card_header(h4("Najczęściej odwiedzane przez nas miejsca")),
+               p('Opis lalallallalallalallla'),
                plotOutput("wykres_slupkowy", height = "500px")
              )
            )
@@ -155,25 +187,36 @@ ui <- navbarPage(
            fluidPage(
              h4("Intensywność ruchu w ciągu doby"),
              p("Wykres pokazuje liczbę zarejestrowanych punktów o prędkości > 2 km/h w podziale na godziny."),
-             card(
-               plotOutput("wykres_godzinowy", height = "600px")
+             p('Opis lalallallalallalallla'),
+             sidebarLayout(
+               sidebarPanel(
+                 sliderInput("zakres_godzin", 
+                             "Wybierz przedział godzin:",
+                             min = 0, max = 23, 
+                             value = c(0, 23), # Domyślnie zaznaczone od 0 do 23
+                             step = 1)
+               ),
+               mainPanel(
+                 card(
+                   plotOutput("wykres_godzinowy", height = "600px")
+                 )
+               )
              )
            )
   ),
   tabPanel("Przebyte dystanse",
-           sidebarLayout(
-             sidebarPanel(
-               h4("Wybierz metrykę"),
-               selectInput("wybor_widoku", "Wybierz metrykę:",
-                           choices = c("Kilometry (suma)" = "km", 
-                                       "Kroki (suma)" = "kroki"),
-                           selected = "km"),
-               hr(),
-               p("Dane są sumowane od dnia 7 grudnia 2025.")
+           fluidPage(
+             h4("Przebyte dystanse (liczone w krokach i kilometrach)"),
+             p('Opis lalallallalallalallla'),
+             card(
+               card_body(
+                 selectInput("wybor_widoku", "Wybierz metrykę:",
+                             choices = c("Kilometry (suma)" = "km", 
+                                         "Kroki (suma)" = "kroki"),
+                             selected = "km")
+               )
              ),
-             mainPanel(
-               plotlyOutput("wykres_kroki_km", height = "600px")
-             )
+             plotlyOutput("wykres_kroki_km", height = "600px")
            )
   )
   
@@ -191,10 +234,10 @@ server <- function(input, output, session) {
       
       data_plot <- data %>% 
         group_by(osoba) %>%
-        slice(seq(1, n(), by = 10)) %>%
+        slice(seq(1, n(), by = 6)) %>%
         ungroup()
    
-      pal <- colorFactor(palette = c("#E16036", "darkred", "#241715"), 
+      pal <- colorFactor(palette =kolory, 
                          domain = c("Hela", "Magda", "Szymon"))
       
       leaflet(data_plot) %>%
@@ -209,7 +252,7 @@ server <- function(input, output, session) {
       data_zbiorcza <- rankingi_osobiste %>% filter(osoba %in% input$osoba_zbiorcza)
       
       color_palette <- colorFactor(
-        palette = c("Hela" = "#E16036", "Magda" = "darkred", "Szymon" = "#241715"), 
+        palette = kolory, 
         domain = c("Hela", "Magda", "Szymon")
       )
       
@@ -235,20 +278,47 @@ server <- function(input, output, session) {
         coord_flip() +
         labs(x = "Miejsce", y = "Liczba wizyt") +
         theme_minimal() +
-        scale_fill_manual(values = c("Magda" = "darkred", "Hela" = "#E16036", "Szymon" = "#241715"))
+        scale_fill_manual(values = kolory)+
+        theme(axis.text = element_text(color = "white"),
+              axis.title = element_text(color = "white"),
+              axis.title.x = element_text(size = 15),
+              axis.title.y = element_text(size = 15),
+              axis.text.x = element_text(size = 12), 
+              axis.text.y = element_text(size = 13),
+              strip.text = element_text(size = 18, face = "bold", color="white"),
+              plot.background = element_rect(fill = "#222222", color = NA),
+              panel.background = element_rect(fill = "#222222", color = NA),
+              panel.grid.major = element_line(color = "#444444"),
+              panel.grid.minor = element_blank())
     })
     
     output$wykres_godzinowy <- renderPlot({
-      ggplot(aktywnosc_godzinowa, aes(x = godzina, y = intensywnosc, color = osoba)) +
+      dane_filtrowane <- aktywnosc_godzinowa %>%
+        filter(godzina >= input$zakres_godzin[1], 
+               godzina <= input$zakres_godzin[2])
+      
+      ggplot(dane_filtrowane, aes(x = godzina, y = intensywnosc, color = osoba)) +
         geom_line(linewidth = 1.2) +
         geom_area(aes(fill = osoba), alpha = 0.1, position = "identity") +
-        facet_wrap(~osoba, ncol = 1, scales = "free_y") +
+        facet_wrap(~osoba, ncol = 1, scales = "free") +
         scale_x_continuous(breaks = 0:23) +
-        scale_color_manual(values = c("Magda" = "darkred", "Hela" = "#E16036", "Szymon" = "#241715")) +
-        scale_fill_manual(values = c("Magda" = "darkred", "Hela" = "#E16036", "Szymon" = "#241715")) +
+        scale_color_manual(values = kolory) +
+        scale_fill_manual(values = kolory) +
         labs(x = "Godzina", y = "Liczba logów") +
         theme_minimal() +
-        theme(legend.position = "none")
+        theme(legend.position = "none",
+              axis.text = element_text(color = "white"),
+              axis.title = element_text(color = "white"),
+              axis.title.x = element_text(size = 15),
+              axis.title.y = element_text(size = 15),
+              axis.text.x = element_text(size = 13), 
+              axis.text.y = element_text(size = 12),
+              strip.text = element_text(size = 18, face = "bold", color="white"),
+              panel.spacing = unit(2, "lines"),
+              plot.background = element_rect(fill = "#222222", color = NA),
+              panel.background = element_rect(fill = "#222222", color = NA),
+              panel.grid.major = element_line(color = "#444444"),
+              panel.grid.minor = element_blank())
     })
     
     output$wykres_kroki_km <- renderPlotly({
@@ -258,7 +328,7 @@ server <- function(input, output, session) {
           geom_point(aes(text = paste0("<b>Osoba:</b> ", Osoba, "<br><b>Data:</b> ", Data, 
                                        "<br><b>Dziś:</b> ", round(Dystans_km, 2), " km",
                                        "<br><b>Suma:</b> ", round(Suma_km, 1), " km"))) +
-          labs(title = "Suma przebytych kilometrów", y = "Kilometry (km)")
+          labs(title = "Suma przebytych kilometrów", y = "Kilometry")
       } else {
         p <- ggplot(dane_zbiorcze_kroki, aes(x = Data, y = Suma_Krokow, color = Osoba)) +
           geom_line(size = 1) +
@@ -268,8 +338,19 @@ server <- function(input, output, session) {
           labs(title = "Suma zrobionych kroków", y = "Liczba kroków")
       }
       
-      p <- p + scale_color_manual(values = c("Magda" = "darkred", "Hela" = "#E16036", "Szymon" = "#241715")) +
-        theme_bw() + theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+      p <- p + scale_color_manual(values = kolory) +
+        theme_minimal() + 
+        theme(axis.text.x = element_text(angle = 45, hjust = 1),
+              plot.title = element_text(hjust = 0.5, size = 15, color="white"),
+              axis.text = element_text(color = "white"),
+              axis.title = element_text(color = "white"),
+              legend.text = element_text(color = "white", size = 10),
+              legend.title = element_text(color = "white", face = "bold"),
+              plot.background = element_rect(fill = "#222222", color = NA),
+              panel.background = element_rect(fill = "#222222", color = NA),
+              panel.grid.major = element_line(color = "#444444"),
+              panel.grid.minor = element_blank()
+              ) +
         scale_y_continuous(labels = label_number(big.mark = " "))
       
       ggplotly(p, tooltip = "text")%>%
