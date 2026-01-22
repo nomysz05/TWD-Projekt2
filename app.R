@@ -207,7 +207,8 @@ ui <- navbarPage(
   tabPanel("Przebyte dystanse",
            fluidPage(
              h4("Przebyte dystanse (liczone w krokach i kilometrach)"),
-             p('Opis lalallallalallalallla'),
+             p('Ile kroków (lub kilometrów) każdy z nas przebył od początku do końca pomiaru?'),
+             p('Dla porównania z Warszawy do Torunia jest 180km w linii prostej. Zatem każdy z nas mógłby tam dojść.'),
              card(
                card_body(
                  selectInput("wybor_widoku", "Wybierz metrykę:",
@@ -217,6 +218,28 @@ ui <- navbarPage(
                )
              ),
              plotlyOutput("wykres_kroki_km", height = "600px")
+           )
+  ),
+  tabPanel("Cel kroków",
+           fluidPage(
+             h4("Realizacja dziennego celu (6000 kroków)"),
+             p("Sprawdźmy, czy udało nam się zrealizować założony cel danego dnia."),
+             card(
+               card_body(
+                 radioButtons("wybor_osoby_cel", "Wybierz osobę:",
+                              choices = c("Magda", "Hela", "Szymon"),
+                              selected = "Magda",
+                              inline = TRUE)
+               )
+             ),
+
+             card(
+               plotlyOutput("wykres_cel_krokow", height = "600px")
+             ),
+             
+             br(),
+
+             plotOutput("pasek_procentowy", height = "100px")
            )
   )
   
@@ -357,6 +380,62 @@ server <- function(input, output, session) {
         layout(hoverlabel = list(bordercolor = "transparent",
                                  font = list(color = "white", size = 13)))
     })
-}
+    
+    output$wykres_cel_krokow <- renderPlotly({
+      wybrana_osoba <- input$wybor_osoby_cel
+      dane_wykres <- dane_zbiorcze_kroki %>% filter(Osoba == wybrana_osoba)
+      
+      p <- ggplot(dane_wykres, aes(x = Data, y = Kroki)) +
+        geom_segment(aes(x = Data, xend = Data, y = 0, yend = Kroki), color = "gray80") +
+        geom_point(size = 3, aes(
+          color = Kroki >= 6000,
+          text = paste0("<b>Data:</b> ", Data, "<br><b>Liczba kroków:</b> ", Kroki, 
+                        "<br><b>Status:</b> ", ifelse(Kroki >= 6000, "Cel zrealizowany", "Poniżej celu"))
+        )) +
+        geom_hline(yintercept = 6000, linetype = "dashed", color = "white", alpha = 0.5) +
+        scale_color_manual(values = c("FALSE" = "#e74c3c", "TRUE" = "#2ecc71")) +
+        scale_x_date(date_labels = "%b %d") +
+        scale_y_continuous(breaks = c(0, 6000, 10000, 15000, 20000, 25000, 30000)) +
+        theme_minimal(base_family = "Century Gothic") +
+        labs(title = paste(wybrana_osoba), x = "", y = "Liczba kroków") +
+        theme(
+          axis.text.x = element_text(angle = 45, hjust = 1, color = "white"),
+          axis.text.y = element_text(color = "white"),
+          axis.title = element_text(color = "white"),
+          plot.title = element_text(color = "white", hjust = 0.5, size = 16),
+          legend.position = "none",
+          plot.background = element_rect(fill = "#222222", color = NA),
+          panel.background = element_rect(fill = "#222222", color = NA),
+          panel.grid.major = element_line(color = "#444444"),
+          panel.grid.minor = element_blank()
+        )
+      
+      ggplotly(p, tooltip = "text") %>%
+        layout(hoverlabel = list(bgcolor = "white", bordercolor = "transparent", font = list(family = "Century Gothic", color = "black", size = 13)))
+    })
+    
 
+    output$pasek_procentowy <- renderPlot({
+      wybrana_osoba <- input$wybor_osoby_cel
+      
+      statystyki <- dane_zbiorcze_kroki %>%
+        filter(Osoba == wybrana_osoba) %>%
+        mutate(Status = ifelse(Kroki >= 6000, "Zrealizowany", "Niezrealizowany")) %>%
+        group_by(Status) %>%
+        summarise(liczba = n(), .groups = "drop") %>%
+        mutate(proc = liczba / sum(liczba)) %>%
+        arrange(desc(Status)) 
+      
+      ggplot(statystyki, aes(x = 1, y = proc, fill = Status)) +
+        geom_col(position = "fill", width = 0.6) + 
+        coord_flip() + 
+        scale_fill_manual(values = c("Niezrealizowany" = "#e74c3c", "Zrealizowany" = "#2ecc71")) +
+        geom_text(aes(label = paste0(Status, "\n", round(proc * 100), "%")), 
+                  position = position_fill(vjust = 0.5), 
+                  color = "white", size = 6, fontface = "bold", family = "Century Gothic") +
+        theme_void() +
+        theme(legend.position = "none")
+    }, bg = "transparent") 
+}
 shinyApp(ui = ui, server = server)
+
