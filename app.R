@@ -110,7 +110,7 @@ kolory <- c("Magda" = "#133DF6", "Hela" = "#1E96FC", "Szymon" = "#F26430")
 ##  APLIKACJA:
 ui <- navbarPage(
   title = "Nasza aktywność w ciągu miesiąca",
-  theme = bs_theme(version = 5, bootswatch = "darkly"),
+  theme = bs_theme(version = 5, bootswatch = "darkly", "navbar-bg" = "#FDECDB"),
   tabPanel("O projekcie",
            fluidPage(
              container = list(style = "max-width: 900px; margin-top: 30px;"),
@@ -438,4 +438,5 @@ server <- function(input, output, session) {
     }, bg = "transparent") 
 }
 shinyApp(ui = ui, server = server)
+
 
