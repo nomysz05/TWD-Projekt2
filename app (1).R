@@ -115,29 +115,60 @@ ui <- navbarPage(
   theme = bs_theme(version = 5, bootswatch = "darkly"),
   tabPanel("O projekcie",
            fluidPage(
-             container = list(style = "max-width: 900px; margin-top: 30px;"),
-             card(
-               card_header(h3("O projekcie", class = "text-center")),
-               card_body(
-                 p("Witaj w aplikacji monitorującej aktywność fizyczną i przemieszczanie się grupy znajomych: ", 
-                   strong("Heli, Magdy i Szymona"), "."),
-                 p("Aplikacja przetwarza dane z GPS oraz liczników kroków, aby wizualizować nasze nawyki i styl życia na przestrzeni ostatniego miesiąca."),
-                 hr(),
-                 h4("Co zawiera ta aplikacja?"),
-                 tags$ul(
-                   tags$li(strong("Trasa aktywności:"), " Interaktywna mapa pozwalająca prześledzić dokładne ścieżki, którymi poruszaliśmy się wybranego dnia."),
-                   tags$li(strong("Lokalizacje:"), " Analiza miejsc, w których bywamy najczęściej – od uczelni (MiNI, Gmach Główny) po domy i miejsca rekreacji."),
-                   tags$li(strong("Rytm dobowy:"), " Wykresy intensywności ruchu, które pokazują, w jakich godzinach jesteśmy najbardziej aktywni."),
-                   tags$li(strong("Statystyki dystansu:"), " Zbiorcze zestawienie przebytych kilometrów i zrobionych kroków w formie interaktywnego wykresu liniowego."),
-                   tags$li(strong("Cel kroków:"), " Monitoring realizacji dziennego wyzwania 6000 kroków wraz z podsumowaniem skuteczności dla każdego z nas.")
+             div(style = "max-width: 1100px; margin: 0 auto; padding: 40px 15px;",
+                 div(class = "text-center mb-5",
+                     h1("AKTYWNOŚCI MINIONEGO MIESIĄCA", 
+                        style = "font-weight: 800; font-size: 3rem; color: white; letter-spacing: 2px;"),
+                     p(style = "font-size: 1.4rem; opacity: 0.8;",
+                       "Interaktywna analiza aktywności każdego z nas.")
                  ),
-                 hr(),
-                 p(em("Dane zbieraliśmy za pomocą aplikacji Strava oraz Pacer, pobieramy je z repozytorium na GitHub.")),
-                 hr()
-               )
+                 card(
+                   style = "border: none; background: rgba(255,255,255,0.05); border-radius: 20px; margin-bottom: 30px;",
+                   card_body(
+                     div(class = "row align-items-center",
+                             p("Projekt powstał w oparciu o dane zbierane przez nas na co dzień za pomocą aplikacji ", 
+                               strong("Strava"), " oraz ", strong("Pacer"), ". Wykorzystując informacje GPS oraz dzienne statystyki kroków, wykonaliśmy analizę naszych nawyków ruchowych, stylu życia oraz sposobów przemieszczania się.
+                               W aplikacji pozwalamy użytkownikowi nie tylko oglądać statystyki, ale również samodzielnie je filtrować i porównywać.")
+                         )
+                     )
+                   )
+                 ),
+                 h3("Nasze analizy:", class = "mb-4", style = "font-weight: 700; border-left: 5px solid white; padding-left: 15px;"),
+                 
+                 layout_column_wrap(
+                   width = 1/3,
+                   gap = "20px",
+                   card(
+                     card_header(strong("Trasy aktywności")),
+                     card_body("Interaktywna mapa przedstawiająca ścieżki naszych przemieszczeń - od codziennych spacerów po dalekie wyjazdy.")
+                   ),
+                   card(
+                     card_header(strong("Najczęściej odwiedzane miejsca")),
+                     card_body("Analiza lokalizacji, w których spędzaliśmy najwięcej czasu. Wielkość punktów na mapie odzwierciedla częstotliwość naszych wizyt.")
+                   ),
+                   card(
+                     card_header(strong("Rytm dobowy aktywności")),
+                     card_body("Wykres pokazujący, w jakich godzinach jesteśmy najbardziej aktywni. Pozwala porównać, kto z nas jest rannym ptaszkiem, a kto nocnym markiem.")
+                   ),
+                   card(
+                     card_header(strong("Intensywność aktywności w tygodniu")),
+                     card_body("UZUPELNIJ (to o heatmapie)")
+                   ),
+                   card(
+                     card_header(strong("Zbiorcze statystyki dystansu i kroków")),
+                     card_body("Wykresy liniowe prezentujące liczbę przebytych kilometrów oraz wykonanych kroków w czasie.")
+                   ),
+                   card(
+                     card_header(strong("Dzienny cel kroków")),
+                     card_body("Jak często udawało się osiągnąć założony dzienny cel (domyślnie 6000 kroków) wraz z czytelnym podsumowaniem.")
+                   )
+                 ),
+                 hr(class = "my-5"),
+                 div(class = "text-center text-muted",
+                     p(style = "font-weight: bold; color: white;", "Helena Maciątek | Magdalena Forowicz | Szymon Lachowicz")
+                 )
              )
-           )
-  ),
+           ),
   
   tabPanel("Trasa aktywności",
            sidebarLayout(
@@ -188,22 +219,46 @@ ui <- navbarPage(
            )
            
   ),
-  tabPanel("O której najczęściej się poruszaliśmy",
+  tabPanel("Kiedy się poruszaliśmy",
            fluidPage(
-             h4("Intensywność ruchu w ciągu doby"),
-             p("Poniższy wykres prezentuje nasz rytm dobowy. Pokazuje on procentowy udział aktywności (przemieszczania się z prędkością powyżej 2 km/h) w konkretnych godzinach. Pozwala to określić, kto z nas jest rannym ptaszkiem, a kto preferuje wieczorne spacery lub powroty."),
-             sidebarLayout(
-               sidebarPanel(
-                 sliderInput("zakres_godzin", 
-                             "Wybierz przedział godzin:",
-                             min = 0, max = 23, 
-                             value = c(0, 23), # Domyślnie zaznaczone od 0 do 23
-                             step = 1)
+             fluidRow(
+               column(width = 3,
+                      card(
+                        card_body(
+                          h4("Intensywność ruchu w ciągu doby"),
+                          p("Poniższy wykres prezentuje nasz rytm dobowy. Pokazuje on procentowy udział aktywności (przemieszczania się z prędkością powyżej 2 km/h) w konkretnych godzinach."),
+                          p("Pozwala to określić, kto z nas jest rannym ptaszkiem, a kto preferuje wieczorne spacery lub powroty."),
+                          sliderInput("zakres_godzin", 
+                                      "Wybierz przedział godzin:",
+                                      min = 0, max = 23, 
+                                      value = c(0, 23),
+                                      step = 1)
+                        )
+                      )
                ),
-               mainPanel(
-                 card(
-                   plotlyOutput("wykres_godzinowy", height = "600px")
-                 )
+               column(width = 8,
+                      card(
+                        plotlyOutput("wykres_godzinowy", height = "550px")
+                      )
+               )
+             ),
+             br(),
+             fluidRow(
+               column(width = 3,
+                      card(
+                        card_body(
+                          h4("Intensywność kroków w skali tygodnia"),
+                          p("Heatmapa pozwala zauważyć regularność naszych aktywności. Im bardziej niebieskie pole tym mniejsza aktywność."),
+                          radioButtons("wybor_osoby_heatmapa", "Wybierz osobę:",
+                                       choices = c("Magda", "Hela", "Szymon"),
+                                       selected = "Magda")
+                        )
+                      )
+               ),
+               column(width = 8,
+                      card(
+                        plotlyOutput("heatmapa_krokow", height = "500px")
+                      )
                )
              )
            )
@@ -226,52 +281,56 @@ ui <- navbarPage(
   ),
   tabPanel("Cel kroków",
            fluidPage(
-             h4("Realizacja dziennego celu (6000 kroków)"),
+             uiOutput("naglowek_celu"),
              p("Sprawdźmy, czy udało nam się zrealizować założony cel danego dnia."),
              card(
                card_body(
-                 radioButtons("wybor_osoby_cel", "Wybierz osobę:",
-                              choices = c("Magda", "Hela", "Szymon"),
-                              selected = "Magda",
-                              inline = TRUE)
+                 layout_column_wrap(
+                   width = 1/2,
+                   radioButtons("wybor_osoby_cel", "Wybierz osobę:",
+                                choices = c("Magda", "Hela", "Szymon"),
+                                selected = "Magda",
+                                inline = TRUE),
+                   numericInput("cel_krokow", "Twój dzienny cel kroków:", 
+                                value = 6000, min = 0, max = 10000, step = 500)
+                 )
                )
              ),
+             plotOutput("pasek_procentowy", height = "100px"),
+             br(),
              card(
                plotlyOutput("wykres_cel_krokow", height = "600px")
-             ),
-             br(),
-             plotOutput("pasek_procentowy", height = "100px")
+             )
            )
   )
 )
 
 server <- function(input, output, session) {
   
+  output$naglowek_celu <- renderUI({
+    h4(paste0("Realizacja dziennego celu (", format(input$cel_krokow, big.mark=" "), " kroków)"))
+  })
+  
   output$mapa_sciezek <- renderLeaflet({
-    # 1. Filtrowanie danych na podstawie wybranego zakresu
     data_filtered <- wszystkie_punkty %>%
       filter(osoba %in% input$osoba,
              as.Date(timestamp) >= input$data[1],
              as.Date(timestamp) <= input$data[2])
     
-    # Sprawdzenie czy są dane
     validate(
       need(nrow(data_filtered) > 0, "Brak zarejestrowanych tras w tym przedziale czasowym.")
     )
-    
-    # 2. Próbkowanie punktów (żeby mapa działała płynnie)
+
     data_plot <- data_filtered %>% 
       group_by(osoba) %>%
-      slice(seq(1, n(), by = 10)) %>% # Zwiększyłem skok do 10 dla lepszej wydajności przy zakresach
+      slice(seq(1, n(), by = 10)) %>%
       ungroup()
     
     pal <- colorFactor(palette = kolory, 
                        domain = c("Hela", "Magda", "Szymon"))
     
-    # 3. Tworzenie mapy z automatycznym centrowaniem
     leaflet(data_plot) %>%
       addTiles() %>%
-      # Ta linia odpowiada za przybliżenie mapy do aktualnie przefiltrowanych punktów:
       fitBounds(lng1 = min(data_plot$position_long), lat1 = min(data_plot$position_lat),
                 lng2 = max(data_plot$position_long), lat2 = max(data_plot$position_lat)) %>%
       addCircles(~position_long, ~position_lat, 
@@ -337,7 +396,7 @@ server <- function(input, output, session) {
       layout(
         showlegend = FALSE,
         margin = list(l = 100, r = 20, t = 40, b = 40), 
-        hoverlabel = list(bgcolor = "#333333", font = list(color = "white"))
+        hoverlabel = list(font = list(color = "white"))
       )
   })
   
@@ -371,10 +430,12 @@ server <- function(input, output, session) {
       scale_fill_manual(values = kolory) +
       labs(
         x = "Godzina", 
-        y = "% całkowitej aktywności"
+        y = "% całkowitej aktywności",
+        title = "Aktywność w trakcie doby"
       ) +
       theme_minimal() +
       theme(
+        plot.title = element_text(hjust = 0.5, size = 15, color="white"),
         legend.position = "none",
         plot.background = element_rect(fill = "#222222", color = NA),
         panel.background = element_rect(fill = "#222222", color = NA),
@@ -389,7 +450,7 @@ server <- function(input, output, session) {
       layout(
         showlegend = FALSE,
         margin = list(t = 60, b = 80, l = 60, r = 20),
-        hoverlabel = list(bgcolor = "#333333", font = list(color = "white")),
+        hoverlabel = list(font = list(color = "white")),
         xaxis = list(
           title = list(font = list(color = "white"), standoff = 20),
           tickfont = list(color = "white")
@@ -399,6 +460,56 @@ server <- function(input, output, session) {
           tickfont = list(color = "white")
         )
       )
+  })
+  
+  output$heatmapa_krokow <- renderPlotly({
+    wybrana_osoba <- input$wybor_osoby_heatmapa
+
+    dane_heatmapa <- dane_zbiorcze_kroki %>%
+      filter(Osoba == wybrana_osoba) %>%
+      mutate(
+        dzien_tyg = wday(Data, label = TRUE, abbr = FALSE, week_start = 1),
+        tydzien = floor_date(Data, "week", week_start = 1),
+        dzien_tyg = factor(dzien_tyg, levels = rev(levels(dzien_tyg)))
+      )
+    
+    pierwszy_tydzien <- min(dane_heatmapa$tydzien, na.rm = TRUE)
+    ostatni_tydzien  <- max(dane_heatmapa$tydzien, na.rm = TRUE)
+    dane_heatmapa <- dane_heatmapa %>%
+      filter(tydzien > pierwszy_tydzien & tydzien < ostatni_tydzien) %>% 
+      mutate(numer_tyg = as.numeric(factor(tydzien))) %>% 
+      mutate(
+        label_text = paste0(
+          "<b>Numer tygodnia:</b> ", numer_tyg, "<br>",
+          "<b>Dzień tygodnia:</b> ", dzien_tyg, "<br>",
+          "<b>Kroki:</b> ", Kroki, "%<br>"
+        ))
+    
+    p <- ggplot(dane_heatmapa, aes(x = numer_tyg, y = dzien_tyg, fill = Kroki)) +
+      geom_tile(color = "#222222", size = 0.5) +
+      scale_fill_gradientn(
+        colors = c("#133DF6", "#1E96FC", "#F26430"),
+        values = scales::rescale(c(0, 5000, 15000))
+      ) +
+      labs(
+        title = paste("Intensywność kroków - ", wybrana_osoba),
+        x = "Tydzień",
+        y = "",
+        scale = "Ilość kroków"
+      ) +
+      theme_minimal() +
+      theme(
+        plot.title = element_text(hjust = 0.5, size = 15, color="white"),
+        plot.background = element_rect(fill = "#222222", color = NA),
+        panel.background = element_rect(fill = "#222222", color = NA),
+        text = element_text(color = "white"),
+        axis.text = element_text(color = "white"),
+        panel.grid = element_blank()
+      )
+    
+    ggplotly(p) %>%
+      layout(hoverlabel = list(font = list(color = "white")),
+             margin = list(t = 60, b = 80, l = 60, r = 20))
   })
   
   output$wykres_kroki_km <- renderPlotly({
@@ -440,26 +551,27 @@ server <- function(input, output, session) {
   
   output$wykres_cel_krokow <- renderPlotly({
     wybrana_osoba <- input$wybor_osoby_cel
+    cel <- input$cel_krokow
     dane_wykres <- dane_zbiorcze_kroki %>% filter(Osoba == wybrana_osoba)
     
     p <- ggplot(dane_wykres, aes(x = Data, y = Kroki)) +
       geom_segment(aes(x = Data, xend = Data, y = 0, yend = Kroki), color = "gray80") +
       geom_point(size = 3, aes(
-        color = Kroki >= 6000,
+        color = Kroki >= cel,
         text = paste0("<b>Data:</b> ", Data, "<br><b>Liczba kroków:</b> ", Kroki, 
-                      "<br><b>Status:</b> ", ifelse(Kroki >= 6000, "Cel zrealizowany", "Poniżej celu"))
+                      "<br><b>Status:</b> ", ifelse(Kroki >= cel, "Cel zrealizowany", "Poniżej celu"))
       )) +
-      geom_hline(yintercept = 6000, linetype = "dashed", color = "white", alpha = 0.5) +
+      geom_hline(yintercept = cel, linetype = "dashed", color = "white", alpha = 0.5) +
       scale_color_manual(values = c("FALSE" = "#e74c3c", "TRUE" = "#2ecc71")) +
       scale_x_date(date_labels = "%b %d") +
       scale_y_continuous(breaks = c(0, 6000, 10000, 15000, 20000, 25000, 30000)) +
       theme_minimal() +
-      labs(title = paste("Dzienny cel kroków -", wybrana_osoba), x = "", y = "Liczba kroków") +
+      labs(title = paste("Dzienny cel kroków - ", wybrana_osoba), x = "", y = "Liczba kroków") +
       theme(
         axis.text.x = element_text(angle = 45, hjust = 1, color = "white"),
         axis.text.y = element_text(color = "white"),
         axis.title = element_text(color = "white"),
-        plot.title = element_text(color = "white", hjust = 0.5, size = 16),
+        plot.title = element_text(color = "white", hjust = 0.5, size = 15),
         legend.position = "none",
         plot.background = element_rect(fill = "#222222", color = NA),
         panel.background = element_rect(fill = "#222222", color = NA),
@@ -468,15 +580,16 @@ server <- function(input, output, session) {
       )
     
     ggplotly(p, tooltip = "text") %>%
-      layout(hoverlabel = list(bgcolor = "white", bordercolor = "transparent", font = list(color = "black", size = 13)))
+      layout(hoverlabel = list(bordercolor = "transparent", font = list(color = "white", size = 13)))
   })
   
   output$pasek_procentowy <- renderPlot({
+    cel <- input$cel_krokow
     wybrana_osoba <- input$wybor_osoby_cel
     
     statystyki <- dane_zbiorcze_kroki %>%
       filter(Osoba == wybrana_osoba) %>%
-      mutate(Status = ifelse(Kroki >= 6000, "Zrealizowany", "Niezrealizowany")) %>%
+      mutate(Status = ifelse(Kroki >= cel, "Zrealizowany", "Niezrealizowany")) %>%
       group_by(Status) %>%
       summarise(liczba = n(), .groups = "drop") %>%
       mutate(proc = liczba / sum(liczba)) %>%
