@@ -152,7 +152,7 @@ ui <- navbarPage(
                    ),
                    card(
                      card_header(strong("Intensywność aktywności w tygodniu")),
-                     card_body("UZUPELNIJ (to o heatmapie)")
+                     card_body("Interaktywna heatmapa kroków, która pozwala zaobserwować regularność naszych działań w skali całego miesiąca.")
                    ),
                    card(
                      card_header(strong("Zbiorcze statystyki dystansu i kroków")),
@@ -226,7 +226,7 @@ ui <- navbarPage(
                       card(
                         card_body(
                           h4("Intensywność ruchu w ciągu doby"),
-                          p("Poniższy wykres prezentuje nasz rytm dobowy. Pokazuje on procentowy udział aktywności (przemieszczania się z prędkością powyżej 2 km/h) w konkretnych godzinach."),
+                          p("Wykres ten prezentuje nasz rytm dobowy. Pokazuje procentowy udział aktywności (przemieszczania się z prędkością powyżej 2 km/h) w konkretnych godzinach."),
                           p("Pozwala to określić, kto z nas jest rannym ptaszkiem, a kto preferuje wieczorne spacery lub powroty."),
                           sliderInput("zakres_godzin", 
                                       "Wybierz przedział godzin:",
@@ -248,7 +248,8 @@ ui <- navbarPage(
                       card(
                         card_body(
                           h4("Intensywność kroków w skali tygodnia"),
-                          p("Heatmapa pozwala zauważyć regularność naszych aktywności. Im bardziej niebieskie pole tym mniejsza aktywność."),
+                          p("Heatmapa pozwala zauważyć regularność naszych aktywności. Dzięki niej można łatwo sprawdzić, 
+                               w które dni tygodnia byliśmy najbardziej aktywni (czerwone pola), a kiedy wybieraliśmy chwilę odpoczynku (niebieskie pola)."),
                           radioButtons("wybor_osoby_heatmapa", "Wybierz osobę:",
                                        choices = c("Magda", "Hela", "Szymon"),
                                        selected = "Magda")
@@ -482,10 +483,10 @@ server <- function(input, output, session) {
         label_text = paste0(
           "<b>Numer tygodnia:</b> ", numer_tyg, "<br>",
           "<b>Dzień tygodnia:</b> ", dzien_tyg, "<br>",
-          "<b>Kroki:</b> ", Kroki, "%<br>"
+          "<b>Kroki:</b> ", Kroki, "<br>"
         ))
     
-    p <- ggplot(dane_heatmapa, aes(x = numer_tyg, y = dzien_tyg, fill = Kroki)) +
+    p <- ggplot(dane_heatmapa, aes(x = numer_tyg, y = dzien_tyg, fill = Kroki, text = label_text)) +
       geom_tile(color = "#222222", size = 0.5) +
       scale_fill_gradientn(
         colors = c("#133DF6", "#1E96FC", "#F26430"),
@@ -507,7 +508,7 @@ server <- function(input, output, session) {
         panel.grid = element_blank()
       )
     
-    ggplotly(p) %>%
+    ggplotly(p, tooltip = "text") %>%
       layout(hoverlabel = list(font = list(color = "white")),
              margin = list(t = 60, b = 80, l = 60, r = 20))
   })
@@ -608,3 +609,4 @@ server <- function(input, output, session) {
 }
 
 shinyApp(ui = ui, server = server)
+
